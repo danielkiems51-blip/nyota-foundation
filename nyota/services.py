@@ -81,7 +81,7 @@ class PayheroService:
 
             auth = None
             if self.basic_auth_token:
-                headers["Authorization"] = self.basic_auth_token
+                headers["Authorization"] = self.basic_auth_token if self.basic_auth_token.startswith("Basic ") else f"Basic {self.basic_auth_token}"
             else:
                 auth = (self.username, self.password)
 
@@ -92,7 +92,6 @@ class PayheroService:
                 "provider": "m-pesa",
                 "external_reference": reference,
                 "callback_url": self.callback_url,
-                "description": description,
             }
 
             response = requests.post(url, headers=headers, json=payload, auth=auth, timeout=30)
@@ -162,7 +161,7 @@ class PayheroService:
 
             auth = None
             if self.basic_auth_token:
-                headers["Authorization"] = self.basic_auth_token
+                headers["Authorization"] = self.basic_auth_token if self.basic_auth_token.startswith("Basic ") else f"Basic {self.basic_auth_token}"
             else:
                 auth = (self.username, self.password)
 
