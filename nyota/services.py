@@ -73,7 +73,10 @@ class PayheroService:
             # Clean and normalize the phone number
             phone_number = self._normalize_phone(phone_number)
 
+            # Ensure the URL points to the STK Push endpoint
             url = self.api_url
+            if not url.endswith("/initiate-stk-push"):
+                url = f"{url.rstrip('/')}/initiate-stk-push"
             
             headers = {
                 "Content-Type": "application/json",
@@ -154,7 +157,10 @@ class PayheroService:
             dict: Transaction status information
         """
         try:
-            url = f"{self.api_url}/{transaction_id}"
+            # Derive the base URL by removing /payments if present, and append /transaction-status
+            base_url = self.api_url.split('/payments')[0]
+            url = f"{base_url.rstrip('/')}/transaction-status"
+            
             headers = {
                 "Content-Type": "application/json",
             }
@@ -165,7 +171,9 @@ class PayheroService:
             else:
                 auth = (self.username, self.password)
 
-            response = requests.get(url, headers=headers, auth=auth, timeout=30)
+            # Pass transaction_id as the reference query parameter
+            params = {"reference": transaction_id}
+            response = requests.get(url, headers=headers, auth=auth, params=params, timeout=30)
 
             if response.status_code == 200:
                 return {
