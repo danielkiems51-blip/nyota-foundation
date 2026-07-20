@@ -20,4 +20,4 @@ services:
       - key: PAYHERO_API_PASSWORD
         sync: false
       - key: PAYHERO_CALLBACK_URL
-        value: 'https://nyota-foundation1.onrender.com/api/mpesa/callback/'
+        value: 'https://nyota-foundations16.onrender.com/api/mpesa/callback/'

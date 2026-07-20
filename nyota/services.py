@@ -96,6 +96,13 @@ class PayheroService:
                 "callback_url": callback_url or self.callback_url,
             }
 
+            # Debug logging to diagnose 500 errors from Payhero
+            auth_type = "Token" if self.basic_auth_token else "Basic"
+            logger.info(f"Payhero STK Push Request -> URL: {url}")
+            logger.info(f"Payhero STK Push Payload -> {payload}")
+            logger.info(f"Payhero Auth Method -> {auth_type}")
+            print(f"[DEBUG] Payhero STK Push -> URL: {url}, Payload: {payload}, Auth: {auth_type}")
+
             response = requests.post(url, headers=headers, json=payload, auth=auth, timeout=30)
             
             if response.status_code in [200, 201]:
