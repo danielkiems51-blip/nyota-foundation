@@ -50,11 +50,13 @@ def initiate_payment(request):
             }
             
             payhero = PayheroService()
+            callback_url = request.build_absolute_uri('/api/mpesa/callback/')
             result = payhero.initiate_stk_push(
                 phone_number=phone_number,
                 amount=fee_amount,
                 reference=reference,
-                description=description
+                description=description,
+                callback_url=callback_url
             )
             
             if result.get('success'):

@@ -27,11 +27,10 @@ class PayheroService:
         # FIX: Corrected the quote syntax to prevent the SyntaxError.
         self.basic_auth_token = raw_token.strip().strip('"').strip("'") if raw_token else None
 
-        # 1. Validate Core API URL, Channel ID, and Callback URL
+        # 1. Validate Core API URL and Channel ID
         missing_core = []
         if not self.api_url: missing_core.append('PAYHERO_API_URL')
         if not self.channel_id: missing_core.append('PAYHERO_CHANNEL_ID')
-        if not self.callback_url: missing_core.append('PAYHERO_CALLBACK_URL')
 
         if missing_core:
             raise ValueError(f"Missing critical Payhero settings: {', '.join(missing_core)}")
@@ -49,7 +48,7 @@ class PayheroService:
         auth_method = "Basic Auth Token" if has_token else "Username/Password"
         logger.info(f"PayheroService initialized successfully using {auth_method}")
 
-    def initiate_stk_push(self, phone_number, amount, reference, description):
+    def initiate_stk_push(self, phone_number, amount, reference, description, callback_url=None):
         """
         Initiate an STK Push payment via Payhero API.
 
@@ -94,7 +93,7 @@ class PayheroService:
                 "channel_id": int(self.channel_id) if str(self.channel_id).isdigit() else self.channel_id,
                 "provider": "m-pesa",
                 "external_reference": reference,
-                "callback_url": self.callback_url,
+                "callback_url": callback_url or self.callback_url,
             }
 
             response = requests.post(url, headers=headers, json=payload, auth=auth, timeout=30)
