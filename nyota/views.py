@@ -1,6 +1,6 @@
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
-from .services import PayheroService
+from .services import PaynexusService
 from django.shortcuts import render, redirect
 import json
 import uuid
@@ -49,9 +49,9 @@ def initiate_payment(request):
                 'status': 'PENDING'
             }
             
-            payhero = PayheroService()
+            paynexus = PaynexusService()
             callback_url = request.build_absolute_uri('/api/mpesa/callback/')
-            result = payhero.initiate_stk_push(
+            result = paynexus.initiate_stk_push(
                 phone_number=phone_number,
                 amount=fee_amount,
                 reference=reference,
@@ -114,7 +114,7 @@ def check_payment_status_api(request, reference):
 @csrf_exempt
 def mpesa_callback(request):
     """
-    Handle M-Pesa payment callback from Payhero.
+    Handle M-Pesa payment callback from PayNexus.
     """
     if request.method == 'POST':
         try:
@@ -122,8 +122,8 @@ def mpesa_callback(request):
             logger_data = json.dumps(data, indent=2)
             print(f"Callback received: {logger_data}")
             
-            # Get external reference from Payhero response
-            # Note: Payhero structure usually has external_reference at the top level
+            # Get external reference from PayNexus response
+            # Note: PayNexus structure usually has external_reference at the top level
             reference = data.get('external_reference')
             status_code = data.get('status_code') # 200 for success
             

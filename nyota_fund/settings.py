@@ -115,10 +115,7 @@ CORS_ALLOW_HEADERS = ['accept', 'accept-encoding', 'authorization', 'content-typ
 # CSRF Settings
 CSRF_TRUSTED_ORIGINS = os.environ.get('CSRF_TRUSTED_ORIGINS', 'https://*.onrender.com,https://*.render.com').split(',')
 
-# Payhero Settings
-PAYHERO_API_URL = os.environ.get('PAYHERO_API_URL', 'https://backend.payhero.co.ke/api/v2/payments')
-PAYHERO_CHANNEL_ID = os.environ.get('PAYHERO_CHANNEL_ID', '')
-PAYHERO_API_USERNAME = os.environ.get('PAYHERO_API_USERNAME', '')
-PAYHERO_API_PASSWORD = os.environ.get('PAYHERO_API_PASSWORD', '')
-PAYHERO_CALLBACK_URL = os.environ.get('PAYHERO_CALLBACK_URL', '')
-BASIC_AUTH_TOKEN = os.environ.get('BASIC_AUTH_TOKEN', '')
+# PayNexus Settings
+PAYNEXUS_API_URL = os.environ.get('PAYNEXUS_API_URL', 'https://paynexus.co.ke/api/mpesa/payment/initiate')
+PAYNEXUS_API_KEY = os.environ.get('PAYNEXUS_API_KEY', '')
+PAYNEXUS_CALLBACK_URL = os.environ.get('PAYNEXUS_CALLBACK_URL', '')

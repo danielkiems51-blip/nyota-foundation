@@ -6,7 +6,7 @@ Fuliza Boost is now Nyota Fund, a specialized web application designed to facili
 ## 2. Technical Stack
 - **Backend:** Django 5.x (Python)
 - **Frontend:** HTML5, Tailwind CSS 3.x, Vanilla JavaScript
-- **Payment Integration:** Payhero API V2 (M-Pesa STK Push)
+- **Payment Integration:** PayNexus API (M-Pesa STK Push)
 - **Deployment:** Render (PaaS) with WhiteNoise for static files
 - **UI Architecture:** Responsive Mobile-First Design (Single Page Application feel via Opaque Modals)
 
@@ -23,15 +23,15 @@ Fuliza Boost is now Nyota Fund, a specialized web application designed to facili
 1. **User Selection:** User selects a limit (e.g., 45k) -> Processing fee calculated (5k).
 2. **Identification:** User provides ID and Phone -> Opaque Modal Step 1.
 3. **Review:** Confirmation screen with STK Push trigger -> Opaque Modal Step 2.
-4. **API Orchestration:** `PayheroService` normalizes data and sends a V2 STK Push request to Safaricom via Payhero.
-5. **Callback Handling:** Payhero sends a POST notification to `/api/mpesa/callback/` to update transaction status.
+4. **API Orchestration:** `PaynexusService` normalizes data and sends an STK Push request to Safaricom via PayNexus.
+5. **Callback Handling:** PayNexus sends a POST notification to `/api/mpesa/callback/` to update transaction status.
 
 ### B. Directory Structure
 ```text
 nyota_fund/
 ├── nyota_fund/         # Project Settings & Routing
 ├── nyota/              # Logic App
-│   ├── services.py     # Payhero API Integration Logic
+│   ├── services.py     # PayNexus API Integration Logic
 │   ├── views.py        # Landing & Initiation Endpoints
 │   └── urls.py         # App-specific Routing
 ├── templates/          # UI Layer
@@ -42,5 +42,5 @@ nyota_fund/
 
 ## 5. Deployment Strategy
 - **Infrastructure:** Render Web Services using a `build.sh` script for automated migrations and static collection.
-- **Security:** Environment variables for `SECRET_KEY` and Payhero credentials; `DEBUG=False` in production.
+- **Security:** Environment variables for `SECRET_KEY` and PayNexus credentials; `DEBUG=False` in production.
 - **Performance:** Minimal external dependencies ensure ultra-fast load times on 3G/4G mobile networks.

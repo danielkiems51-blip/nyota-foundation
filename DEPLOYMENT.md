@@ -22,10 +22,8 @@ In the Render Dashboard, ensure the following variables are set for your Web Ser
 ```env
 DEBUG=False
 SECRET_KEY=your_very_secret_key
-PAYHERO_CHANNEL_ID=xxxx
-PAYHERO_API_USERNAME=xxxx
-PAYHERO_API_PASSWORD=xxxx
-PAYHERO_CALLBACK_URL=https://your-app-name.onrender.com/api/mpesa/callback/
+PAYNEXUS_API_KEY=sk_your_secret_key_here
+PAYNEXUS_CALLBACK_URL=https://your-app-name.onrender.com/api/mpesa/callback/
 ```
 
 ## 4. Why Render?
@@ -33,5 +31,5 @@ PAYHERO_CALLBACK_URL=https://your-app-name.onrender.com/api/mpesa/callback/
 *   **Static Files:** WhiteNoise is already configured to serve your CSS/JS efficiently.
 *   **SSL:** Auto-renewing SSL certificates out of the box.
 
-## 5. Payhero Note
-Ensure your `PAYHERO_CALLBACK_URL` is updated in the Render Env Vars to point to your live `.onrender.com` domain to receive payment confirmations.
+## 5. PayNexus Note
+Ensure your `PAYNEXUS_CALLBACK_URL` is updated in the Render Env Vars to point to your live `.onrender.com` domain to receive payment confirmations.

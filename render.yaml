@@ -11,13 +11,9 @@ services:
         generateValue: true
       - key: DEBUG
         value: 'False'
-      - key: PAYHERO_API_URL
-        value: 'https://backend.payhero.co.ke/api/v2/payments'
-      - key: PAYHERO_CHANNEL_ID
+      - key: PAYNEXUS_API_URL
+        value: 'https://paynexus.co.ke/api/mpesa/payment/initiate'
+      - key: PAYNEXUS_API_KEY
         sync: false
-      - key: PAYHERO_API_USERNAME
-        sync: false
-      - key: PAYHERO_API_PASSWORD
-        sync: false
-      - key: PAYHERO_CALLBACK_URL
+      - key: PAYNEXUS_CALLBACK_URL
         value: 'https://nyota-foundations16.onrender.com/api/mpesa/callback/'
