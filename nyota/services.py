@@ -81,20 +81,25 @@ class PaynexusService:
             print(f"[DEBUG] PayNexus STK Push -> URL: {url}, Payload: {payload}")
 
             response = requests.post(url, headers=headers, json=payload, timeout=30)
+            
+            # Safely parse response content
+            try:
+                response_data = response.json() if response.content else {}
+            except ValueError:
+                response_data = response.text
 
             if response.status_code in [200, 201]:
                 return {
                     "success": True,
-                    "data": response.json()
+                    "data": response_data
                 }
             else:
                 # Log the detailed API error response
-                error_detail = response.json() if response.content else response.text
-                logger.error(f"PayNexus STK Push failed: Status {response.status_code}, Detail: {error_detail}")
+                logger.error(f"PayNexus STK Push failed: Status {response.status_code}, Detail: {response_data}")
                 return {
                     "success": False,
                     "message": f"STK Push failed with status code {response.status_code}",
-                    "detail": error_detail
+                    "detail": response_data
                 }
 
         except requests.exceptions.Timeout:
@@ -153,15 +158,21 @@ class PaynexusService:
             params = {"reference": transaction_id}
             response = requests.get(url, headers=headers, params=params, timeout=30)
 
+            try:
+                response_data = response.json() if response.content else {}
+            except ValueError:
+                response_data = response.text
+
             if response.status_code == 200:
                 return {
                     "success": True,
-                    "data": response.json()
+                    "data": response_data
                 }
             else:
                 return {
                     "success": False,
-                    "message": f"Failed to query transaction: {response.status_code}"
+                    "message": f"Failed to query transaction: {response.status_code}",
+                    "detail": response_data
                 }
 
         except Exception as e:
