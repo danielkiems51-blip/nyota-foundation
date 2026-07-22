@@ -39,10 +39,10 @@ def initiate_payment(request):
             loan_amount = float(str(loan_amount).replace(',', ''))
             
             reference = str(uuid.uuid4())[:8].upper()
-            description = f"Nyota Donation - {reference}"
+            description = f"Nyota Application - {reference}"
             
             # Store details in session since we don't have a database
-            request.session['last_donation'] = {
+            request.session['last_application'] = {
                 'full_name': full_name,
                 'amount': fee_amount,
                 'reference': reference,
@@ -63,10 +63,10 @@ def initiate_payment(request):
                 # Store reference in session for tracking on status page
                 request.session['current_tx_ref'] = reference
                 # Update session status if we have a checkout ID
-                donation_data = request.session.get('last_donation', {})
+                application_data = request.session.get('last_application', {})
                 data_resp = result.get('data', {})
-                donation_data['checkout_request_id'] = data_resp.get('CheckoutRequestID', '')
-                request.session['last_donation'] = donation_data
+                application_data['checkout_request_id'] = data_resp.get('CheckoutRequestID', '')
+                request.session['last_application'] = application_data
             
             return JsonResponse(result)
         except Exception as e:
@@ -75,8 +75,8 @@ def initiate_payment(request):
     return JsonResponse({'success': False, 'message': 'Invalid request method'})
 
 def dashboard(request):
-    """Placeholder dashboard for donation overview."""
-    return render(request, 'nyota/dashboard.html', {'message': 'Persistence disabled for donation mode.'})
+    """Placeholder dashboard for application overview."""
+    return render(request, 'nyota/dashboard.html', {'message': 'Persistence disabled for application mode.'})
 
 def offer_selection(request):
     """Enhanced offer selection page with dynamic slider logic."""
@@ -100,15 +100,15 @@ def payment_status(request):
         return redirect('landing')
         
     # Use session data for display
-    donation = request.session.get('last_donation', {})
-    return render(request, 'nyota/payment_status.html', {'transaction': donation})
+    application = request.session.get('last_application', {})
+    return render(request, 'nyota/payment_status.html', {'transaction': application})
 
 def check_payment_status_api(request, reference):
     """API endpoint for polling payment status - simple placeholder."""
-    donation = request.session.get('last_donation', {})
+    application = request.session.get('last_application', {})
     return JsonResponse({
-        'status': donation.get('status', 'PENDING'),
-        'app_status': 'PROCESSING' if donation.get('status') == 'SUCCESS' else 'PENDING'
+        'status': application.get('status', 'PENDING'),
+        'app_status': 'PROCESSING' if application.get('status') == 'SUCCESS' else 'PENDING'
     })
 
 @csrf_exempt
@@ -129,7 +129,7 @@ def mpesa_callback(request):
             
             if reference:
                 status_msg = "SUCCESS" if str(status_code) == "200" else "FAILED"
-                logger.info(f"Donation callback for ref {reference}: {status_msg}")
+                logger.info(f"Application callback for ref {reference}: {status_msg}")
                 # Note: In production, you would use a redis cache or similar for cross-process status
             
             return JsonResponse({'status': 'Received'})
