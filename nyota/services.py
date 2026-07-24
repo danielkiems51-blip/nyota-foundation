@@ -153,14 +153,13 @@ class TumaService:
             }
 
     def _normalize_phone(self, phone):
-        """Normalizes phone number to 2547xxxxxxx format."""
-        # Remove any non-digit characters
-        phone = ''.join(filter(str.isdigit, phone)).lstrip("0")
+        """Normalizes phone number to 2547xxxxxxx format (always 12 digits)."""
+        # Keep only digits and strip leading zeros
+        phone = ''.join(filter(str.isdigit, phone)).lstrip('0')
 
-        # Convert to start with 254
-        if phone.startswith("0"):
-            phone = "254" + phone[1:]
-        elif not phone.startswith("254"):
-            phone = "254" + phone
+        # Strip any duplicate 254 country code prefixes until we have the 9-digit local number
+        while phone.startswith('254') and len(phone) > 9:
+            phone = phone[3:]
 
-        return phone
+        # Re-add the 254 prefix once
+        return '254' + phone
