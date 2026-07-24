@@ -108,11 +108,6 @@ class TumaService:
                 "callback_url": final_callback
             }
 
-            # Optional: Tuma might accept a merchant_request_id or reference in payload too
-            if reference:
-                payload["merchant_request_id"] = reference
-                payload["reference"] = reference
-
             # Debug logging
             logger.info(f"Tuma STK Push Request -> URL: {url}")
             logger.info(f"Tuma STK Push Payload -> {payload}")
