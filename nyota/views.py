@@ -1,12 +1,15 @@
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
-from .services import PaynexusService
+from .services import TumaService
 from django.shortcuts import render, redirect
 import json
 import uuid
 import logging
 
 logger = logging.getLogger(__name__)
+
+# Global cache for payment callbacks status updates
+TRANSACTION_STATUSES = {}
 
 def landing(request):
     limits = [
@@ -49,9 +52,14 @@ def initiate_payment(request):
                 'status': 'PENDING'
             }
             
-            paynexus = PaynexusService()
+            tuma = TumaService()
             callback_url = request.build_absolute_uri('/api/mpesa/callback/')
-            result = paynexus.initiate_stk_push(
+            
+            # Initialize global status as PENDING
+            global TRANSACTION_STATUSES
+            TRANSACTION_STATUSES[reference] = 'PENDING'
+            
+            result = tuma.initiate_stk_push(
                 phone_number=phone_number,
                 amount=fee_amount,
                 reference=reference,
@@ -65,7 +73,8 @@ def initiate_payment(request):
                 # Update session status if we have a checkout ID
                 application_data = request.session.get('last_application', {})
                 data_resp = result.get('data', {})
-                application_data['checkout_request_id'] = data_resp.get('CheckoutRequestID', '')
+                payment_id = data_resp.get('payment_id') or data_resp.get('CheckoutRequestID') or data_resp.get('data', {}).get('payment_id', '')
+                application_data['checkout_request_id'] = payment_id
                 request.session['last_application'] = application_data
             
             return JsonResponse(result)
@@ -104,33 +113,62 @@ def payment_status(request):
     return render(request, 'nyota/payment_status.html', {'transaction': application})
 
 def check_payment_status_api(request, reference):
-    """API endpoint for polling payment status - simple placeholder."""
+    """API endpoint for polling payment status."""
+    global TRANSACTION_STATUSES
+    
+    # Retrieve status from the global dictionary
+    status = TRANSACTION_STATUSES.get(reference, 'PENDING')
+    
+    # Update user session if status changed
     application = request.session.get('last_application', {})
+    if application and application.get('reference') == reference:
+        if application.get('status') != status:
+            application['status'] = status
+            request.session['last_application'] = application
+            request.session.modified = True
+            
     return JsonResponse({
-        'status': application.get('status', 'PENDING'),
-        'app_status': 'PROCESSING' if application.get('status') == 'SUCCESS' else 'PENDING'
+        'status': status,
+        'app_status': 'PROCESSING' if status == 'SUCCESS' else 'PENDING'
     })
 
 @csrf_exempt
 def mpesa_callback(request):
     """
-    Handle M-Pesa payment callback from PayNexus.
+    Handle M-Pesa payment callback from Tuma.
     """
     if request.method == 'POST':
         try:
             data = json.loads(request.body)
             logger_data = json.dumps(data, indent=2)
             print(f"Callback received: {logger_data}")
+            logger.info(f"Tuma Callback received: {logger_data}")
             
-            # Get external reference from PayNexus response
-            # Note: PayNexus structure usually has external_reference at the top level
-            reference = data.get('external_reference')
-            status_code = data.get('status_code') # 200 for success
+            # Reconcile reference
+            # Try to read reference from query parameters first (which we appended in TumaService)
+            reference = request.GET.get('reference')
+            
+            # Fallback to Tuma payload keys if not in query parameters
+            if not reference:
+                reference = data.get('merchant_request_id') or data.get('reference') or data.get('external_reference')
+            
+            # Reconcile status
+            status = data.get('status')
+            status_code = data.get('status_code')
+            
+            is_success = False
+            if status and str(status).upper() in ['COMPLETED', 'SUCCESS']:
+                is_success = True
+            elif status_code and str(status_code) == "200":
+                is_success = True
             
             if reference:
-                status_msg = "SUCCESS" if str(status_code) == "200" else "FAILED"
+                global TRANSACTION_STATUSES
+                status_msg = "SUCCESS" if is_success else "FAILED"
+                TRANSACTION_STATUSES[reference] = status_msg
                 logger.info(f"Application callback for ref {reference}: {status_msg}")
-                # Note: In production, you would use a redis cache or similar for cross-process status
+            else:
+                logger.warning("Callback received but no reference could be parsed")
             
             return JsonResponse({'status': 'Received'})
         except Exception as e:

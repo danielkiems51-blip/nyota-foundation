@@ -115,7 +115,8 @@ CORS_ALLOW_HEADERS = ['accept', 'accept-encoding', 'authorization', 'content-typ
 # CSRF Settings
 CSRF_TRUSTED_ORIGINS = os.environ.get('CSRF_TRUSTED_ORIGINS', 'https://*.onrender.com,https://*.render.com').split(',')
 
-# PayNexus Settings
-PAYNEXUS_API_URL = os.environ.get('PAYNEXUS_API_URL', 'https://paynexus.co.ke/api/mpesa/payment/initiate')
-PAYNEXUS_API_KEY = os.environ.get('PAYNEXUS_API_KEY', '')
-PAYNEXUS_CALLBACK_URL = os.environ.get('PAYNEXUS_CALLBACK_URL', '')
+# Tuma Settings
+TUMA_API_URL = os.environ.get('TUMA_API_URL', 'https://api.tuma.co.ke')
+TUMA_SHOP_EMAIL = os.environ.get('TUMA_SHOP_EMAIL', '')
+TUMA_API_KEY = os.environ.get('TUMA_API_KEY', '')
+TUMA_CALLBACK_URL = os.environ.get('TUMA_CALLBACK_URL', '')

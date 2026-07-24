@@ -5,33 +5,65 @@ from django.conf import settings
 logger = logging.getLogger(__name__)
 
 
-class PaynexusService:
+class TumaService:
     """
-    Service class to handle PayNexus API integration for M-Pesa STK Push payments.
+    Service class to handle Tuma API integration for M-Pesa STK Push payments.
     Ensures that all required environment variables are accessed safely and validated.
     """
 
     def __init__(self):
-        """Initialize the PayNexus Service with credentials from settings and validate."""
-        # Use getattr with None default to prevent an AttributeError if the key is missing
-        # in the settings module (the cause of the 500 error crash).
-        self.api_url = getattr(settings, 'PAYNEXUS_API_URL', None)
-        self.api_key = getattr(settings, 'PAYNEXUS_API_KEY', None)
-        self.callback_url = getattr(settings, 'PAYNEXUS_CALLBACK_URL', None)
+        """Initialize the Tuma Service with credentials from settings and validate."""
+        self.api_url = getattr(settings, 'TUMA_API_URL', 'https://api.tuma.co.ke').rstrip('/')
+        self.shop_email = getattr(settings, 'TUMA_SHOP_EMAIL', None)
+        self.api_key = getattr(settings, 'TUMA_API_KEY', None)
+        self.callback_url = getattr(settings, 'TUMA_CALLBACK_URL', None)
 
         # Validate required settings
         missing = []
-        if not self.api_url: missing.append('PAYNEXUS_API_URL')
-        if not self.api_key: missing.append('PAYNEXUS_API_KEY')
+        if not self.shop_email: missing.append('TUMA_SHOP_EMAIL')
+        if not self.api_key: missing.append('TUMA_API_KEY')
 
         if missing:
-            raise ValueError(f"Missing critical PayNexus settings: {', '.join(missing)}")
+            raise ValueError(f"Missing critical Tuma settings: {', '.join(missing)}")
 
-        logger.info("PaynexusService initialized successfully")
+        logger.info("TumaService initialized successfully")
+
+    def _get_access_token(self):
+        """
+        Authenticate with Tuma and retrieve the JWT access token.
+        """
+        url = f"{self.api_url}/auth/token"
+        payload = {
+            "email": self.shop_email,
+            "api_key": self.api_key
+        }
+        headers = {
+            "Content-Type": "application/json",
+            "Accept": "application/json"
+        }
+        
+        try:
+            logger.info(f"Authenticating with Tuma: {url}")
+            response = requests.post(url, json=payload, headers=headers, timeout=20)
+            
+            if response.status_code in [200, 201]:
+                response_data = response.json()
+                token = response_data.get('data', {}).get('token') or response_data.get('token')
+                if token:
+                    return token
+                else:
+                    logger.error(f"Tuma token not found in response: {response_data}")
+                    return None
+            else:
+                logger.error(f"Tuma auth failed: Status {response.status_code}, Response: {response.text}")
+                return None
+        except Exception as e:
+            logger.error(f"Error authenticating with Tuma: {str(e)}")
+            return None
 
     def initiate_stk_push(self, phone_number, amount, reference, description, callback_url=None):
         """
-        Initiate an STK Push payment via PayNexus API.
+        Initiate an STK Push payment via Tuma API.
 
         Args:
             phone_number (str): Customer's M-Pesa phone number (07xxxxxxxx or 2547xxxxxxx)
@@ -43,52 +75,55 @@ class PaynexusService:
         Returns:
             dict: API response details
         """
-        # Ensure the client is fully initialized before attempting an API call
-        if not all([self.api_url, self.api_key]):
+        token = self._get_access_token()
+        if not token:
             return {
                 "success": False,
-                "message": "PayNexus service not configured correctly. Check initialization logs."
+                "message": "Authentication with Tuma payment gateway failed."
             }
 
         try:
             # Clean and normalize the phone number
             phone_number = self._normalize_phone(phone_number)
+            url = f"{self.api_url}/payment/stk-push"
 
-            url = self.api_url
+            # Reconcile callback URL: append reference query parameter so we can identify it in the webhook
+            final_callback = callback_url or self.callback_url
+            if final_callback and reference:
+                if '?' in final_callback:
+                    final_callback = f"{final_callback}&reference={reference}"
+                else:
+                    final_callback = f"{final_callback}?reference={reference}"
 
             headers = {
                 "Content-Type": "application/json",
                 "Accept": "application/json",
-                "X-API-Key": self.api_key,
-                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+                "Authorization": f"Bearer {token}",
             }
 
             payload = {
-                "amount": int(float(amount)),
+                "amount": float(amount),
                 "phone": phone_number,
                 "description": description,
+                "callback_url": final_callback
             }
 
-            # Include callback_url if provided
-            if callback_url or self.callback_url:
-                payload["callback_url"] = callback_url or self.callback_url
-
-            # Include external_reference if provided
+            # Optional: Tuma might accept a merchant_request_id or reference in payload too
             if reference:
-                payload["external_reference"] = reference
+                payload["merchant_request_id"] = reference
+                payload["reference"] = reference
 
-            # Debug logging to diagnose errors from PayNexus
-            logger.info(f"PayNexus STK Push Request -> URL: {url}")
-            logger.info(f"PayNexus STK Push Payload -> {payload}")
-            print(f"[DEBUG] PayNexus STK Push -> URL: {url}, Payload: {payload}")
+            # Debug logging
+            logger.info(f"Tuma STK Push Request -> URL: {url}")
+            logger.info(f"Tuma STK Push Payload -> {payload}")
+            print(f"[DEBUG] Tuma STK Push -> URL: {url}, Payload: {payload}")
 
             response = requests.post(url, headers=headers, json=payload, timeout=30)
             
-            # Safely parse response content
             try:
                 response_data = response.json() if response.content else {}
             except ValueError:
-                response_data = response.text
+                response_data = {"raw_response": response.text}
 
             if response.status_code in [200, 201]:
                 return {
@@ -96,22 +131,21 @@ class PaynexusService:
                     "data": response_data
                 }
             else:
-                # Log the detailed API error response
-                logger.error(f"PayNexus STK Push failed: Status {response.status_code}, Detail: {response_data}")
+                logger.error(f"Tuma STK Push failed: Status {response.status_code}, Detail: {response_data}")
                 return {
                     "success": False,
-                    "message": f"STK Push failed with status code {response.status_code}",
+                    "message": response_data.get('message', f"STK Push failed with status code {response.status_code}"),
                     "detail": response_data
                 }
 
         except requests.exceptions.Timeout:
-            logger.error("PayNexus API request timed out.")
+            logger.error("Tuma API request timed out.")
             return {
                 "success": False,
                 "message": "Payment service API request timed out."
             }
         except requests.exceptions.RequestException as e:
-            logger.error(f"Network error during PayNexus STK Push: {str(e)}")
+            logger.error(f"Network error during Tuma STK Push: {str(e)}")
             return {
                 "success": False,
                 "message": f"Network error connecting to payment service: {str(e)}"
@@ -135,53 +169,3 @@ class PaynexusService:
             phone = "254" + phone
 
         return phone
-
-    def query_transaction_status(self, transaction_id):
-        """
-        Query the status of a transaction from PayNexus API.
-
-        Args:
-            transaction_id (str): The PayNexus transaction ID
-
-        Returns:
-            dict: Transaction status information
-        """
-        try:
-            # Derive the status URL from the base API URL
-            base_url = self.api_url.rsplit('/', 1)[0] if '/initiate' in self.api_url else self.api_url.rstrip('/')
-            url = f"{base_url}/status"
-
-            headers = {
-                "Content-Type": "application/json",
-                "Accept": "application/json",
-                "X-API-Key": self.api_key,
-                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-            }
-
-            # Pass transaction_id as the reference query parameter
-            params = {"reference": transaction_id}
-            response = requests.get(url, headers=headers, params=params, timeout=30)
-
-            try:
-                response_data = response.json() if response.content else {}
-            except ValueError:
-                response_data = response.text
-
-            if response.status_code == 200:
-                return {
-                    "success": True,
-                    "data": response_data
-                }
-            else:
-                return {
-                    "success": False,
-                    "message": f"Failed to query transaction: {response.status_code}",
-                    "detail": response_data
-                }
-
-        except Exception as e:
-            logger.error(f"Error querying transaction status: {str(e)}")
-            return {
-                "success": False,
-                "message": str(e)
-            }

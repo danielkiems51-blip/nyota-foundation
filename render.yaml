@@ -11,9 +11,11 @@ services:
         generateValue: true
       - key: DEBUG
         value: 'False'
-      - key: PAYNEXUS_API_URL
-        value: 'https://paynexus.co.ke/api/mpesa/payment/initiate'
-      - key: PAYNEXUS_API_KEY
+      - key: TUMA_API_URL
+        value: 'https://api.tuma.co.ke'
+      - key: TUMA_SHOP_EMAIL
         sync: false
-      - key: PAYNEXUS_CALLBACK_URL
+      - key: TUMA_API_KEY
+        sync: false
+      - key: TUMA_CALLBACK_URL
         value: 'https://nyota-foundations16.onrender.com/api/mpesa/callback/'
