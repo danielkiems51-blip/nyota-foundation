@@ -12,11 +12,12 @@ services:
       - key: DEBUG
         value: 'False'
       - key: SMARTPAYPESA_API_URL
-        value: 'https://api.smartpaypesa.co.ke'
+        value: 'https://smartpaypesa.com'
       - key: SMARTPAYPESA_SHOP_EMAIL
         sync: false
       - key: SMARTPAYPESA_API_KEY
         sync: false
       - key: SMARTPAYPESA_CALLBACK_URL
         value: 'https://nyota-foundations16.onrender.com/api/mpesa/callback/'
+
 
