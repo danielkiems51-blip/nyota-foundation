@@ -13,10 +13,13 @@ class SmartPayPesaService:
 
     def __init__(self):
         """Initialize the SmartPayPesa Service with credentials from settings and validate."""
-        default_url = getattr(settings, 'SMARTPAYPESA_API_URL', getattr(settings, 'TUMA_API_URL', 'https://smartpaypesa.com'))
-        # Fix legacy/invalid .co.ke domain if passed in env
+        default_url = getattr(settings, 'SMARTPAYPESA_API_URL', getattr(settings, 'TUMA_API_URL', 'https://api.smartpaypesa.com/v1'))
+        # Fix legacy/invalid domain or path if passed in env
         if 'smartpaypesa.co.ke' in default_url:
             default_url = default_url.replace('smartpaypesa.co.ke', 'smartpaypesa.com')
+        if not default_url.endswith('/v1') and 'smartpaypesa.com' in default_url:
+            default_url = default_url.rstrip('/') + '/v1'
+            
         self.api_url = default_url.rstrip('/')
         self.shop_email = getattr(settings, 'SMARTPAYPESA_SHOP_EMAIL', getattr(settings, 'TUMA_SHOP_EMAIL', None))
         self.api_key = getattr(settings, 'SMARTPAYPESA_API_KEY', getattr(settings, 'TUMA_API_KEY', None))
@@ -25,7 +28,7 @@ class SmartPayPesaService:
         # Validate required settings
         missing = []
         if not self.shop_email and not self.api_key:
-            missing.append('SMARTPAYPESA_API_KEY or SMARTPAYPESA_SHOP_EMAIL')
+            missing.append('SMARTPAYPESA_API_KEY')
 
         if missing:
             raise ValueError(f"Missing critical SmartPayPesa settings: {', '.join(missing)}")
@@ -34,7 +37,7 @@ class SmartPayPesaService:
 
     def _get_access_token(self):
         """
-        Authenticate with SmartPayPesa to retrieve JWT token, or fallback to API key.
+        Authenticate with SmartPayPesa to retrieve JWT token if auth endpoint exists, or return API key.
         """
         if not self.api_key:
             return None
@@ -51,7 +54,7 @@ class SmartPayPesaService:
         
         try:
             logger.info(f"Authenticating with SmartPayPesa: {url}")
-            response = requests.post(url, json=payload, headers=headers, timeout=10)
+            response = requests.post(url, json=payload, headers=headers, timeout=5)
             
             if response.status_code in [200, 201]:
                 response_data = response.json()
@@ -59,9 +62,9 @@ class SmartPayPesaService:
                 if token:
                     return token
         except Exception as e:
-            logger.warning(f"SmartPayPesa token endpoint unreachable ({str(e)}), falling back to direct API key auth.")
+            logger.debug(f"Token endpoint check: {str(e)}")
 
-        # Fallback to direct API key if token endpoint is not used
+        # SmartPayPesa uses API key directly as Bearer token
         return self.api_key
 
     def initiate_stk_push(self, phone_number, amount, reference, description, callback_url=None):
@@ -110,15 +113,14 @@ class SmartPayPesaService:
                 "phone": phone_number,
                 "description": description,
                 "callback_url": final_callback,
-                "api_key": self.api_key or ""
+                "callbackurl": final_callback
             }
 
-            # List of candidate endpoints for SmartPayPesa STK push
+            # Primary and fallback endpoints for SmartPayPesa STK push
             candidate_urls = [
+                f"{self.api_url}/stk/push",
                 f"{self.api_url}/payment/stk-push",
-                f"{self.api_url}/initiatestk",
-                f"{self.api_url}/api/payment/stk-push",
-                f"{self.api_url}/api/payment/initiate"
+                f"{self.api_url.rstrip('/v1')}/initiatestk"
             ]
 
             last_response = None
@@ -139,20 +141,20 @@ class SmartPayPesaService:
                         "data": response_data
                     }
                 elif response.status_code != 404:
-                    # Non-404 error (e.g. 400, 401, 500) from active endpoint
+                    # API endpoint responded (e.g. 400, 401, 500)
                     try:
                         response_data = response.json() if response.content else {}
                     except ValueError:
                         response_data = {"raw_response": response.text}
                     
-                    logger.error(f"SmartPayPesa STK Push failed: Status {response.status_code}, Detail: {response_data}")
+                    logger.error(f"SmartPayPesa STK Push error: Status {response.status_code}, Detail: {response_data}")
                     return {
                         "success": False,
-                        "message": response_data.get('message', f"STK Push failed with status code {response.status_code}"),
+                        "message": response_data.get('error') or response_data.get('message') or f"STK Push failed with status code {response.status_code}",
                         "detail": response_data
                     }
 
-            # If all candidate URLs returned 404
+            # If endpoints return 404
             resp_detail = last_response.text if last_response else "Endpoint not found"
             return {
                 "success": False,
@@ -177,6 +179,7 @@ class SmartPayPesaService:
                 "success": False,
                 "message": f"An unexpected server error occurred: {str(e)}"
             }
+
 
 
     def _normalize_phone(self, phone):

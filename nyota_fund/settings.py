@@ -116,9 +116,10 @@ CORS_ALLOW_HEADERS = ['accept', 'accept-encoding', 'authorization', 'content-typ
 CSRF_TRUSTED_ORIGINS = os.environ.get('CSRF_TRUSTED_ORIGINS', 'https://*.onrender.com,https://*.render.com').split(',')
 
 # SmartPayPesa Settings
-SMARTPAYPESA_API_URL = os.environ.get('SMARTPAYPESA_API_URL', os.environ.get('TUMA_API_URL', 'https://smartpaypesa.com'))
+SMARTPAYPESA_API_URL = os.environ.get('SMARTPAYPESA_API_URL', os.environ.get('TUMA_API_URL', 'https://api.smartpaypesa.com/v1'))
 SMARTPAYPESA_SHOP_EMAIL = os.environ.get('SMARTPAYPESA_SHOP_EMAIL', os.environ.get('TUMA_SHOP_EMAIL', ''))
 SMARTPAYPESA_API_KEY = os.environ.get('SMARTPAYPESA_API_KEY', os.environ.get('TUMA_API_KEY', ''))
 SMARTPAYPESA_CALLBACK_URL = os.environ.get('SMARTPAYPESA_CALLBACK_URL', os.environ.get('TUMA_CALLBACK_URL', ''))
+
 
 
