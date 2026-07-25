@@ -22,9 +22,9 @@ In the Render Dashboard, ensure the following variables are set for your Web Ser
 ```env
 DEBUG=False
 SECRET_KEY=your_very_secret_key
-TUMA_SHOP_EMAIL=merchant@tuma.co.ke
-TUMA_API_KEY=sk_your_secret_key_here
-TUMA_CALLBACK_URL=https://your-app-name.onrender.com/api/mpesa/callback/
+SMARTPAYPESA_SHOP_EMAIL=merchant@smartpaypesa.co.ke
+SMARTPAYPESA_API_KEY=sk_your_secret_key_here
+SMARTPAYPESA_CALLBACK_URL=https://your-app-name.onrender.com/api/mpesa/callback/
 ```
 
 ## 4. Why Render?
@@ -32,5 +32,6 @@ TUMA_CALLBACK_URL=https://your-app-name.onrender.com/api/mpesa/callback/
 *   **Static Files:** WhiteNoise is already configured to serve your CSS/JS efficiently.
 *   **SSL:** Auto-renewing SSL certificates out of the box.
 
-## 5. Tuma Note
-Ensure your `TUMA_CALLBACK_URL` is updated in the Render Env Vars to point to your live `.onrender.com` domain to receive payment confirmations.
+## 5. SmartPayPesa Note
+Ensure your `SMARTPAYPESA_CALLBACK_URL` is updated in the Render Env Vars to point to your live `.onrender.com` domain to receive payment confirmations.
+

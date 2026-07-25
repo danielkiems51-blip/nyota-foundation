@@ -5,32 +5,32 @@ from django.conf import settings
 logger = logging.getLogger(__name__)
 
 
-class TumaService:
+class SmartPayPesaService:
     """
-    Service class to handle Tuma API integration for M-Pesa STK Push payments.
+    Service class to handle SmartPayPesa API integration for M-Pesa STK Push payments.
     Ensures that all required environment variables are accessed safely and validated.
     """
 
     def __init__(self):
-        """Initialize the Tuma Service with credentials from settings and validate."""
-        self.api_url = getattr(settings, 'TUMA_API_URL', 'https://api.tuma.co.ke').rstrip('/')
-        self.shop_email = getattr(settings, 'TUMA_SHOP_EMAIL', None)
-        self.api_key = getattr(settings, 'TUMA_API_KEY', None)
-        self.callback_url = getattr(settings, 'TUMA_CALLBACK_URL', None)
+        """Initialize the SmartPayPesa Service with credentials from settings and validate."""
+        self.api_url = getattr(settings, 'SMARTPAYPESA_API_URL', getattr(settings, 'TUMA_API_URL', 'https://api.smartpaypesa.co.ke')).rstrip('/')
+        self.shop_email = getattr(settings, 'SMARTPAYPESA_SHOP_EMAIL', getattr(settings, 'TUMA_SHOP_EMAIL', None))
+        self.api_key = getattr(settings, 'SMARTPAYPESA_API_KEY', getattr(settings, 'TUMA_API_KEY', None))
+        self.callback_url = getattr(settings, 'SMARTPAYPESA_CALLBACK_URL', getattr(settings, 'TUMA_CALLBACK_URL', None))
 
         # Validate required settings
         missing = []
-        if not self.shop_email: missing.append('TUMA_SHOP_EMAIL')
-        if not self.api_key: missing.append('TUMA_API_KEY')
+        if not self.shop_email: missing.append('SMARTPAYPESA_SHOP_EMAIL')
+        if not self.api_key: missing.append('SMARTPAYPESA_API_KEY')
 
         if missing:
-            raise ValueError(f"Missing critical Tuma settings: {', '.join(missing)}")
+            raise ValueError(f"Missing critical SmartPayPesa settings: {', '.join(missing)}")
 
-        logger.info("TumaService initialized successfully")
+        logger.info("SmartPayPesaService initialized successfully")
 
     def _get_access_token(self):
         """
-        Authenticate with Tuma and retrieve the JWT access token.
+        Authenticate with SmartPayPesa and retrieve the JWT access token.
         """
         url = f"{self.api_url}/auth/token"
         payload = {
@@ -43,7 +43,7 @@ class TumaService:
         }
         
         try:
-            logger.info(f"Authenticating with Tuma: {url}")
+            logger.info(f"Authenticating with SmartPayPesa: {url}")
             response = requests.post(url, json=payload, headers=headers, timeout=20)
             
             if response.status_code in [200, 201]:
@@ -52,18 +52,18 @@ class TumaService:
                 if token:
                     return token
                 else:
-                    logger.error(f"Tuma token not found in response: {response_data}")
+                    logger.error(f"SmartPayPesa token not found in response: {response_data}")
                     return None
             else:
-                logger.error(f"Tuma auth failed: Status {response.status_code}, Response: {response.text}")
+                logger.error(f"SmartPayPesa auth failed: Status {response.status_code}, Response: {response.text}")
                 return None
         except Exception as e:
-            logger.error(f"Error authenticating with Tuma: {str(e)}")
+            logger.error(f"Error authenticating with SmartPayPesa: {str(e)}")
             return None
 
     def initiate_stk_push(self, phone_number, amount, reference, description, callback_url=None):
         """
-        Initiate an STK Push payment via Tuma API.
+        Initiate an STK Push payment via SmartPayPesa API.
 
         Args:
             phone_number (str): Customer's M-Pesa phone number (07xxxxxxxx or 2547xxxxxxx)
@@ -79,7 +79,7 @@ class TumaService:
         if not token:
             return {
                 "success": False,
-                "message": "Authentication with Tuma payment gateway failed."
+                "message": "Authentication with SmartPayPesa payment gateway failed."
             }
 
         try:
@@ -109,9 +109,9 @@ class TumaService:
             }
 
             # Debug logging
-            logger.info(f"Tuma STK Push Request -> URL: {url}")
-            logger.info(f"Tuma STK Push Payload -> {payload}")
-            print(f"[DEBUG] Tuma STK Push -> URL: {url}, Payload: {payload}")
+            logger.info(f"SmartPayPesa STK Push Request -> URL: {url}")
+            logger.info(f"SmartPayPesa STK Push Payload -> {payload}")
+            print(f"[DEBUG] SmartPayPesa STK Push -> URL: {url}, Payload: {payload}")
 
             response = requests.post(url, headers=headers, json=payload, timeout=30)
             
@@ -126,7 +126,7 @@ class TumaService:
                     "data": response_data
                 }
             else:
-                logger.error(f"Tuma STK Push failed: Status {response.status_code}, Detail: {response_data}")
+                logger.error(f"SmartPayPesa STK Push failed: Status {response.status_code}, Detail: {response_data}")
                 return {
                     "success": False,
                     "message": response_data.get('message', f"STK Push failed with status code {response.status_code}"),
@@ -134,13 +134,13 @@ class TumaService:
                 }
 
         except requests.exceptions.Timeout:
-            logger.error("Tuma API request timed out.")
+            logger.error("SmartPayPesa API request timed out.")
             return {
                 "success": False,
                 "message": "Payment service API request timed out."
             }
         except requests.exceptions.RequestException as e:
-            logger.error(f"Network error during Tuma STK Push: {str(e)}")
+            logger.error(f"Network error during SmartPayPesa STK Push: {str(e)}")
             return {
                 "success": False,
                 "message": f"Network error connecting to payment service: {str(e)}"
@@ -163,3 +163,8 @@ class TumaService:
 
         # Re-add the 254 prefix once
         return '254' + phone
+
+
+# Alias for backward compatibility
+TumaService = SmartPayPesaService
+

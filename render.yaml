@@ -11,11 +11,12 @@ services:
         generateValue: true
       - key: DEBUG
         value: 'False'
-      - key: TUMA_API_URL
-        value: 'https://api.tuma.co.ke'
-      - key: TUMA_SHOP_EMAIL
+      - key: SMARTPAYPESA_API_URL
+        value: 'https://api.smartpaypesa.co.ke'
+      - key: SMARTPAYPESA_SHOP_EMAIL
         sync: false
-      - key: TUMA_API_KEY
+      - key: SMARTPAYPESA_API_KEY
         sync: false
-      - key: TUMA_CALLBACK_URL
+      - key: SMARTPAYPESA_CALLBACK_URL
         value: 'https://nyota-foundations16.onrender.com/api/mpesa/callback/'
+

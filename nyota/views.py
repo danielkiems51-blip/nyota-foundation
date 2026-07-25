@@ -1,6 +1,6 @@
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
-from .services import TumaService
+from .services import SmartPayPesaService
 from django.shortcuts import render, redirect
 import json
 import uuid
@@ -52,14 +52,14 @@ def initiate_payment(request):
                 'status': 'PENDING'
             }
             
-            tuma = TumaService()
+            smartpaypesa = SmartPayPesaService()
             callback_url = request.build_absolute_uri('/api/mpesa/callback/')
             
             # Initialize global status as PENDING
             global TRANSACTION_STATUSES
             TRANSACTION_STATUSES[reference] = 'PENDING'
             
-            result = tuma.initiate_stk_push(
+            result = smartpaypesa.initiate_stk_push(
                 phone_number=phone_number,
                 amount=fee_amount,
                 reference=reference,
@@ -135,22 +135,22 @@ def check_payment_status_api(request, reference):
 @csrf_exempt
 def mpesa_callback(request):
     """
-    Handle M-Pesa payment callback from Tuma.
+    Handle M-Pesa payment callback from SmartPayPesa.
     """
     if request.method == 'POST':
         try:
             data = json.loads(request.body)
             logger_data = json.dumps(data, indent=2)
             print(f"Callback received: {logger_data}")
-            logger.info(f"Tuma Callback received: {logger_data}")
+            logger.info(f"SmartPayPesa Callback received: {logger_data}")
             
             # Reconcile reference
-            # Try to read reference from query parameters first (which we appended in TumaService)
+            # Try to read reference from query parameters first (which we appended in SmartPayPesaService)
             reference = request.GET.get('reference')
             
-            # Fallback to Tuma payload keys if not in query parameters
+            # Fallback to SmartPayPesa payload keys if not in query parameters
             if not reference:
-                reference = data.get('merchant_request_id') or data.get('reference') or data.get('external_reference')
+                reference = data.get('merchant_request_id') or data.get('reference') or data.get('external_reference') or data.get('transaction_id')
             
             # Reconcile status
             status = data.get('status')
@@ -176,3 +176,4 @@ def mpesa_callback(request):
             return JsonResponse({'status': 'Error', 'message': str(e)}, status=400)
             
     return JsonResponse({'status': 'Method not allowed'}, status=405)
+
