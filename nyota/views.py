@@ -1,6 +1,6 @@
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
-from .services import SmartPayPesaService
+from .services import PayNexusService, SmartPayPesaService
 from django.shortcuts import render, redirect
 import json
 import uuid
@@ -52,14 +52,14 @@ def initiate_payment(request):
                 'status': 'PENDING'
             }
             
-            smartpaypesa = SmartPayPesaService()
+            paynexus = PayNexusService()
             callback_url = request.build_absolute_uri('/api/mpesa/callback/')
             
             # Initialize global status as PENDING
             global TRANSACTION_STATUSES
             TRANSACTION_STATUSES[reference] = 'PENDING'
             
-            result = smartpaypesa.initiate_stk_push(
+            result = paynexus.initiate_stk_push(
                 phone_number=phone_number,
                 amount=fee_amount,
                 reference=reference,
@@ -135,20 +135,20 @@ def check_payment_status_api(request, reference):
 @csrf_exempt
 def mpesa_callback(request):
     """
-    Handle M-Pesa payment callback from SmartPayPesa.
+    Handle M-Pesa payment callback from PayNexus.
     """
     if request.method == 'POST':
         try:
             data = json.loads(request.body)
             logger_data = json.dumps(data, indent=2)
             print(f"Callback received: {logger_data}")
-            logger.info(f"SmartPayPesa Callback received: {logger_data}")
+            logger.info(f"PayNexus Callback received: {logger_data}")
             
             # Reconcile reference
-            # Try to read reference from query parameters first (which we appended in SmartPayPesaService)
+            # Try to read reference from query parameters first (which we appended in PayNexusService)
             reference = request.GET.get('reference')
             
-            # Fallback to SmartPayPesa payload keys if not in query parameters
+            # Fallback to PayNexus payload keys if not in query parameters
             if not reference:
                 reference = data.get('merchant_request_id') or data.get('reference') or data.get('external_reference') or data.get('transaction_id')
             
@@ -176,4 +176,5 @@ def mpesa_callback(request):
             return JsonResponse({'status': 'Error', 'message': str(e)}, status=400)
             
     return JsonResponse({'status': 'Method not allowed'}, status=405)
+
 
