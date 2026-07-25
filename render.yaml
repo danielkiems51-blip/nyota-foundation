@@ -12,7 +12,7 @@ services:
       - key: DEBUG
         value: 'False'
       - key: PAYNEXUS_API_URL
-        value: 'https://api.paynexus.co.ke/v1'
+        value: 'https://api.smartpaypesa.com/v1'
       - key: PAYNEXUS_SHOP_EMAIL
         sync: false
       - key: PAYNEXUS_API_KEY

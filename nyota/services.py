@@ -19,10 +19,11 @@ class PayNexusService:
             getattr(settings, 'SMARTPAYPESA_API_URL', getattr(settings, 'TUMA_API_URL', 'https://api.paynexus.co.ke/v1'))
         )
         # Fix legacy/invalid domain or path if passed in env
-        if 'smartpaypesa.co.ke' in default_url:
-            default_url = default_url.replace('smartpaypesa.co.ke', 'smartpaypesa.com')
+        if 'smartpaypesa.co.ke' in default_url or 'paynexus.co.ke' in default_url or 'api.paynexus' in default_url:
+            default_url = default_url.replace('smartpaypesa.co.ke', 'smartpaypesa.com').replace('api.paynexus.co.ke', 'api.smartpaypesa.com').replace('paynexus.co.ke', 'smartpaypesa.com')
         if not default_url.endswith('/v1') and ('paynexus' in default_url or 'smartpaypesa' in default_url):
             default_url = default_url.rstrip('/') + '/v1'
+
             
         self.api_url = default_url.rstrip('/')
         self.shop_email = getattr(
