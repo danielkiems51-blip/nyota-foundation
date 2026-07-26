@@ -22,8 +22,9 @@ In the Render Dashboard, ensure the following variables are set for your Web Ser
 ```env
 DEBUG=False
 SECRET_KEY=your_very_secret_key
-PAYNEXUS_SHOP_EMAIL=merchant@paynexus.co.ke
-PAYNEXUS_API_KEY=sk_your_secret_key_here
+PAYNEXUS_API_URL=https://paynexus.co.ke
+PAYNEXUS_SHOP_EMAIL=your_email@example.com
+PAYNEXUS_API_KEY=sk_your_secret_key_from_dashboard
 PAYNEXUS_CALLBACK_URL=https://your-app-name.onrender.com/api/mpesa/callback/
 ```
 
@@ -32,7 +33,13 @@ PAYNEXUS_CALLBACK_URL=https://your-app-name.onrender.com/api/mpesa/callback/
 *   **Static Files:** WhiteNoise is already configured to serve your CSS/JS efficiently.
 *   **SSL:** Auto-renewing SSL certificates out of the box.
 
-## 5. PayNexus Note
-Ensure your `PAYNEXUS_CALLBACK_URL` is updated in the Render Env Vars to point to your live `.onrender.com` domain to receive payment confirmations.
+## 5. PayNexus Setup
+1.  Sign in to the [PayNexus Merchant Dashboard](https://paynexus.co.ke).
+2.  Generate your `sk_...` API key from the dashboard.
+3.  Set `PAYNEXUS_API_KEY` in Render Env Vars to your secret key.
+4.  Set `PAYNEXUS_CALLBACK_URL` to your live `.onrender.com` domain to receive payment confirmations.
 
-
+**API Reference:**
+*   **STK Push:** `POST https://paynexus.co.ke/api/mpesa/payment/initiate`
+*   **Check Status:** `GET https://paynexus.co.ke/api/payments/{reference}`
+*   **Auth Header:** `X-API-Key: sk_...`

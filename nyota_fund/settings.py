@@ -116,7 +116,7 @@ CORS_ALLOW_HEADERS = ['accept', 'accept-encoding', 'authorization', 'content-typ
 CSRF_TRUSTED_ORIGINS = os.environ.get('CSRF_TRUSTED_ORIGINS', 'https://*.onrender.com,https://*.render.com').split(',')
 
 # PayNexus Settings
-PAYNEXUS_API_URL = os.environ.get('PAYNEXUS_API_URL', os.environ.get('SMARTPAYPESA_API_URL', os.environ.get('TUMA_API_URL', 'https://api.smartpaypesa.com/v1')))
+PAYNEXUS_API_URL = os.environ.get('PAYNEXUS_API_URL', os.environ.get('SMARTPAYPESA_API_URL', os.environ.get('TUMA_API_URL', 'https://paynexus.co.ke')))
 
 PAYNEXUS_SHOP_EMAIL = os.environ.get('PAYNEXUS_SHOP_EMAIL', os.environ.get('SMARTPAYPESA_SHOP_EMAIL', os.environ.get('TUMA_SHOP_EMAIL', '')))
 PAYNEXUS_API_KEY = os.environ.get('PAYNEXUS_API_KEY', os.environ.get('SMARTPAYPESA_API_KEY', os.environ.get('TUMA_API_KEY', '')))
@@ -127,6 +127,8 @@ SMARTPAYPESA_API_URL = PAYNEXUS_API_URL
 SMARTPAYPESA_SHOP_EMAIL = PAYNEXUS_SHOP_EMAIL
 SMARTPAYPESA_API_KEY = PAYNEXUS_API_KEY
 SMARTPAYPESA_CALLBACK_URL = PAYNEXUS_CALLBACK_URL
+TUMA_API_URL = PAYNEXUS_API_URL
+TUMA_API_KEY = PAYNEXUS_API_KEY
 
 
 
